@@ -11,7 +11,7 @@ namespace SpacePC
 {
 
 
-    public partial class About
+    public partial class case_page
     {
     }
 }
