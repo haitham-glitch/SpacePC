@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data.SqlClient;
+using System.Configuration;
 using System.Web;
 
 namespace SpacePC
@@ -8,23 +9,21 @@ namespace SpacePC
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-            // هنا نقدر نقرأ الـ Cookie إذا كان المستخدم مسجل دخول من قبل
+            if (Request.Cookies["UserInfo"] != null)
+            {
+                Response.Redirect("Default.aspx");
+            }
         }
 
         protected void btnLogin_Click(object sender, EventArgs e)
         {
-            // 1. استقبال البيانات من الفورم
             string email = loginEmail.Text;
             string password = loginPassword.Text;
 
-            // 2. سطر الاتصال بقاعدة البيانات اللي أنشأناها في مجلد App_Data
-            string connString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\SpacePC_DB.mdf;Integrated Security=True";
-
+            string connString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
             using (SqlConnection conn = new SqlConnection(connString))
             {
-                // 3. عملية الـ CRUD (Retrieving/Searching) - نبحث عن المستخدم في الجدول
-                string query = "SELECT Id FROM Users WHERE Email = @Email AND Password = @Password";
-
+                string query = "SELECT FullName FROM Users WHERE Email=@Email AND Password=@Password";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Email", email);
@@ -33,29 +32,26 @@ namespace SpacePC
                     conn.Open();
                     object result = cmd.ExecuteScalar();
 
-                    if (result != null) // إذا لقينا المستخدم في الداتا بيس
+                    if (result != null)
                     {
-                        // 4. استخدام الـ Sessions لحفظ حالة تسجيل الدخول
-                        Session["UserEmail"] = email;
+                        // إنشاء الكوكي (Cookie) لحفظ حالة الدخول
+                        HttpCookie userCookie = new HttpCookie("UserInfo");
+                        userCookie["Email"] = email;
+                        userCookie["Name"] = result.ToString();
 
-                        // 5. استخدام الـ Cookies إذا حط صح على "تذكرني"
                         if (rememberMe.Checked)
                         {
-                            HttpCookie userCookie = new HttpCookie("SpacePC_User");
-                            userCookie.Values["Email"] = email;
-                            userCookie.Expires = DateTime.Now.AddDays(30); // الكوكي يجلس 30 يوم
-                            Response.Cookies.Add(userCookie);
+                            userCookie.Expires = DateTime.Now.AddDays(30);
                         }
 
-                        // توجيه المستخدم للصفحة الرئيسية بعد نجاح الدخول
+                        Response.Cookies.Add(userCookie);
                         Response.Redirect("Default.aspx");
                     }
                     else
                     {
-                        // إذا الإيميل أو الباسوورد غلط
-                        lblMessage.Text = "Invalid email or password.";
+                        lblMessage.Text = "البريد الإلكتروني أو كلمة المرور خاطئة.";
                         lblMessage.Style["display"] = "block";
-                        lblMessage.Style["background"] = "red"; // نخليه أحمر عشان التنبيه
+                        lblMessage.Style["background"] = "red";
                     }
                 }
             }

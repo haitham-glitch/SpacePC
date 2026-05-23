@@ -1,5 +1,4 @@
 ﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.master.cs" Inherits="SpacePC.SiteMaster" %>
-
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head runat="server">
@@ -18,7 +17,6 @@
     <asp:ContentPlaceHolder ID="HeadContent" runat="server">
     </asp:ContentPlaceHolder>
 </head>
-
 <body>
     <form id="form1" runat="server">
         <a href="#main" class="skip-link" data-en="Skip to content" data-ar="تخطّي إلى المحتوى">Skip to content</a>
@@ -43,8 +41,20 @@
                         <button type="button" data-lang="en" class="is-active">EN</button>
                         <button type="button" data-lang="ar">عربي</button>
                     </div>
-                    <a href="Login.aspx" class="btn btn--ghost" data-en="Login" data-ar="تسجيل الدخول">Login</a>
-                    <a href="Signup.aspx" class="btn btn--primary" data-en="Sign up" data-ar="إنشاء حساب">Sign up</a>
+
+                    <asp:PlaceHolder ID="guestNav" runat="server">
+                        <a href="Login.aspx" class="btn btn--ghost" data-en="Login" data-ar="تسجيل الدخول">Login</a>
+                        <a href="Signup.aspx" class="btn btn--primary" data-en="Sign up" data-ar="إنشاء حساب">Sign up</a>
+                    </asp:PlaceHolder>
+
+                    <asp:PlaceHolder ID="userNav" runat="server" Visible="false">
+                        <span style="font-weight: 600; padding: 0 10px;">
+    <span data-en="Hello, " data-ar="مرحباً، ">Hello, </span>
+    <asp:Label ID="lblUserName" runat="server" ForeColor="#ec4899"></asp:Label>
+</span>
+                        <asp:LinkButton ID="btnLogout" runat="server" CssClass="btn btn--primary" OnClick="btnLogout_Click" data-en="Logout" data-ar="تسجيل خروج">Logout</asp:LinkButton>
+                    </asp:PlaceHolder>
+
                     <button class="nav-toggle" type="button" aria-label="Toggle menu" aria-expanded="false">☰</button>
                 </div>
             </div>

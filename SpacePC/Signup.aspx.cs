@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data.SqlClient;
+using System.Configuration;
 
 namespace SpacePC
 {
@@ -11,51 +12,37 @@ namespace SpacePC
 
         protected void btnRegister_Click(object sender, EventArgs e)
         {
-            // 1. استقبال البيانات من حقول الإدخال
-            string email = signupEmail.Text.Trim();
+            if (signupPassword.Text != signupConfirmPassword.Text)
+            {
+                lblSignupMessage.Text = "كلمة المرور غير متطابقة!";
+                return;
+            }
+
+            string email = signupEmail.Text;
             string password = signupPassword.Text;
-            string confirmPassword = signupConfirmPassword.Text;
+            string fullName = email.Split('@')[0]; // نأخذ أول جزء من الإيميل كاسم
 
-            // التحقق من تعبئة الخانات ومن تطابق كلمتي المرور
-            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+            string connString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
+            using (SqlConnection conn = new SqlConnection(connString))
             {
-                lblSignupMessage.Text = "Please fill in all fields.";
-                return;
-            }
-
-            if (password != confirmPassword)
-            {
-                lblSignupMessage.Text = "Passwords do not match!";
-                return;
-            }
-
-            // 2. نص الاتصال بقاعدة البيانات المحلية المحلية داخل مجلد App_Data
-            string connString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\SpacePC_DB.mdf;Integrated Security=True";
-
-            // 3. كتابة أمر الـ CRUD (Insertion) لإدخال البيانات
-            string query = "INSERT INTO Users (Email, Password) VALUES (@Email, @Password)";
-
-            try
-            {
-                using (SqlConnection conn = new SqlConnection(connString))
+                string query = "INSERT INTO Users (FullName, Email, Password) VALUES (@FullName, @Email, @Password)";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@Email", email);
-                        cmd.Parameters.AddWithValue("@Password", password); // حفظ الباسوورد بشكل مباشر لتسهيل متطلبات الواجب الجامعي
+                    cmd.Parameters.AddWithValue("@FullName", fullName);
+                    cmd.Parameters.AddWithValue("@Email", email);
+                    cmd.Parameters.AddWithValue("@Password", password);
 
+                    try
+                    {
                         conn.Open();
-                        cmd.ExecuteNonQuery(); // تنفيذ أمر الحفظ في الجدول
-                        conn.Close();
+                        cmd.ExecuteNonQuery();
+                        Response.Redirect("login.aspx");
+                    }
+                    catch (Exception ex)
+                    {
+                        lblSignupMessage.Text = "حدث خطأ أثناء التسجيل: " + ex.Message;
                     }
                 }
-
-                // بعد نجاح عملية التسجيل، نوجهه لصفحة تسجيل الدخول عشان يجرب الحساب الجديد
-                Response.Redirect("login.aspx");
-            }
-            catch (Exception ex)
-            {
-                lblSignupMessage.Text = "Error during registration: " + ex.Message;
             }
         }
     }
